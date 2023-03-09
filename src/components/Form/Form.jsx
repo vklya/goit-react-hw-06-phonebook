@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import PropTypes from 'prop-types';
 import shortid from 'shortid';
 import css from './form.module.scss';
 
@@ -74,3 +75,7 @@ export default function Form({ onSubmit }) {
       </form>
     );
 }
+
+Form.propTypes = {
+  onSubmit: PropTypes.func.isRequired,
+};

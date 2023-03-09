@@ -1,82 +1,50 @@
-import { useState, useEffect } from "react";
-import shortid from 'shortid';
-import Section from "./Section";
+import { useSelector, useDispatch } from 'react-redux';
+
+import Section from './Section';
 import Form from './Form';
-import Filter from "./Filter";
-import List from "./List";
+import Filter from './Filter';
+import List from './List';
+
+import { addContact, deleteContact, getFilteredContacts } from 'redux/contactsSlice';
+import { getFilter, setFilter } from 'redux/filterSlice';
+
 import css from './app.module.scss';
 
-const LS_KEY = 'contacts';
-
 export function App() {
-  const [contacts, setContacts] = useState(()=> {
-    const contacts = JSON.parse(localStorage.getItem(LS_KEY));
-    return contacts ? contacts : [];
-  });
-  const [filter, setFilter] = useState("");
+  const filteredContacts = useSelector(getFilteredContacts);
+  const filter = useSelector(getFilter);
+  const dispatch = useDispatch();
 
-  useEffect(() => {
-    localStorage.setItem(LS_KEY, JSON.stringify(contacts));
-  }, [contacts])
-
-  const addContact = (name, number) => {
-    if (isDublicate(name)) {
-      alert(`${name} is already in contacts`); 
-      return false;
-    }
-
-    setContacts(prevContacts => {
-      const newContact = {
-        id: shortid.generate(),
-        name,
-        number,
-      };
-
-      return [newContact, ...prevContacts];
-    });
-
-    return true;
+  const handleAddContact = (name, number) => {
+    dispatch(addContact( name, number ));
   };
 
-  const changeFilter = e => {
-    setFilter(e.target.value);
+  const handleDeleteContact = id => {
+    dispatch(deleteContact(id));
   };
 
-  const isDublicate = (newName) => {
-    const normaliazedName = newName.toLowerCase();
-    const result = contacts.find(({ name }) => {
-      return (name.toLowerCase() === normaliazedName)
-    });
-    return Boolean(result);
-  }
-
-  const getContacts = () => {
-    if (!filter) return contacts;
-    const normalizedFilter = filter.toLowerCase();
-
-    return contacts.filter(({name}) =>
-      name.toLowerCase().includes(normalizedFilter),
-    );
+  const changeFilter = ({target}) => {
+    dispatch(setFilter(target.value));
   };
 
-  const deleteContact = contactId => {
-    setContacts(prevContacts =>
-      prevContacts.filter(contact => contact.id !== contactId)
-    );
-  };
+  const isBooks = Boolean(filteredContacts.length);
 
-    return (
-      <div className={css.div}>
-        <Section title="Phonebook">
-          <Form onSubmit={addContact} />
-        </Section>
-        <Section title="Contacts">
-          <Filter value={filter} onChange={changeFilter} />
+  return (
+    <div className={css.div}>
+      <Section title="Phonebook">
+        <Form onSubmit={handleAddContact} />
+      </Section>
+      <Section title="Contacts">
+        <Filter value={filter} onChange={changeFilter} />
+        {isBooks ? (
           <List
-            contacts={getContacts()}
-            onDeleteContact={deleteContact}
+            contacts={filteredContacts}
+            onDeleteContact={handleDeleteContact}
           />
-        </Section>
-      </div>
-    );
-};
+        ) : (
+          <p className={css.message}>There are no contacts in the phonebook.</p>
+        )}
+      </Section>
+    </div>
+  );
+}
